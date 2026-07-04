@@ -29,7 +29,11 @@ from robopianist.music import midi_file, midi_message
 # linear mapping here reproduces the acoustic SPL ∝ log(key speed) behavior.
 # Bounds calibrated empirically (symphony scripts/calibrate_velocity.py).
 _QVEL_VMIN = 0.73
-_QVEL_VMAX = 15.1
+# VMAX is a sensitivity setting (like a keyboard's velocity curve), not a
+# physical limit. The initial 15.1 (99th pct incl. random flailing) put forte
+# out of reach of accurate playing; 8.0 maps the policy's controllable range
+# (~0.7-8 rad/s) onto the full 1-127.
+_QVEL_VMAX = 8.0
 
 
 def qvel_to_midi_velocity(qvel: float) -> int:
