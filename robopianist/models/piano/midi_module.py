@@ -22,6 +22,20 @@ from dm_control import mjcf
 from robopianist.models.piano import piano_constants
 from robopianist.music import midi_file, midi_message
 
+# Linear key-speed -> MIDI velocity mapping. qvel is the key hinge angular
+# velocity (rad/s) at the substep the key crosses the activation threshold,
+# the simulated analogue of a MIDI keyboard's second sensor contact. The
+# synth's velocity->attenuation curve is logarithmic (SoundFont spec), so a
+# linear mapping here reproduces the acoustic SPL ∝ log(key speed) behavior.
+# Bounds calibrated empirically (symphony scripts/calibrate_velocity.py).
+_QVEL_VMIN = 0.73
+_QVEL_VMAX = 15.1
+
+
+def qvel_to_midi_velocity(qvel: float) -> int:
+    frac = (qvel - _QVEL_VMIN) / (_QVEL_VMAX - _QVEL_VMIN)
+    return int(np.clip(np.round(1 + 126.0 * frac), 1, 127))
+
 
 class MidiModule:
     """The piano sound module.
@@ -49,6 +63,7 @@ class MidiModule:
         physics: mjcf.Physics,
         activation: np.ndarray,
         sustain_activation: np.ndarray,
+        key_qvel: Optional[np.ndarray] = None,
     ) -> None:
         # Sanity check dtype since we use bitwise operators.
         assert activation.dtype == bool
@@ -64,9 +79,9 @@ class MidiModule:
         for key_id in np.flatnonzero(state_change & ~self._prev_activation):
             message = midi_message.NoteOn(
                 note=midi_file.key_number_to_midi_number(key_id),
-                # TODO(kevin): In the future, we will replace this with the actual
-                # key velocity. For now, we hardcode it to the maximum velocity.
-                velocity=127,
+                velocity=qvel_to_midi_velocity(key_qvel[key_id])
+                if key_qvel is not None
+                else 127,
                 time=physics.data.time,
             )
             timestep_events.append(message)

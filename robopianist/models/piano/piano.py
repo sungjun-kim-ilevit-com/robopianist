@@ -158,7 +158,10 @@ class Piano(composer.Entity):
         self._update_key_state(physics)
         self._update_key_color(physics)
         self._midi_module.after_substep(
-            physics, self._activation, self._sustain_activation
+            physics,
+            self._activation,
+            self._sustain_activation,
+            key_qvel=physics.bind(self.joints).qvel,
         )
 
     # Methods.
