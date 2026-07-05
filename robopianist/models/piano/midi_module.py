@@ -34,10 +34,16 @@ _QVEL_VMIN = 0.73
 # out of reach of accurate playing; 8.0 maps the policy's controllable range
 # (~0.7-8 rad/s) onto the full 1-127.
 _QVEL_VMAX = 8.0
+# Soft velocity curve (gamma < 1), the standard "light touch" keyboard
+# setting: lifts gentle presses into the audible range. With the synth's
+# 40*log10(v/127) attenuation, gamma=0.5 keeps intentional pp presses above
+# ~-30 dB instead of vanishing at -45 dB.
+_CURVE_GAMMA = 0.5
 
 
 def qvel_to_midi_velocity(qvel: float) -> int:
     frac = (qvel - _QVEL_VMIN) / (_QVEL_VMAX - _QVEL_VMIN)
+    frac = np.clip(frac, 0.0, 1.0) ** _CURVE_GAMMA
     return int(np.clip(np.round(1 + 126.0 * frac), 1, 127))
 
 
