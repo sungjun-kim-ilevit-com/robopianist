@@ -17,7 +17,11 @@
 import time
 
 import numpy as np
-import pyaudio
+
+try:
+    import pyaudio
+except ImportError:  # headless (no live playback); play_sound will raise if used
+    pyaudio = None
 
 from robopianist.music import constants as consts
 
@@ -26,6 +30,8 @@ def play_sound(
     waveform: np.ndarray, sampling_rate: int = consts.SAMPLING_RATE, chunk: int = 1024
 ) -> None:
     """Play a waveform using PyAudio."""
+    if pyaudio is None:
+        raise ImportError("pyaudio is not installed (headless environment).")
     if waveform.dtype != np.int16:
         raise ValueError("waveform must be an np.int16 array.")
 
