@@ -51,6 +51,12 @@ class PianoSoundVideoWrapper(DmControlVideoWrapper):
     def _write_frames(self) -> None:
         super()._write_frames()
 
+        # Upstream bug: the base wrapper only renders/writes the mp4 every
+        # record_every-th episode, but this audio muxing ran unconditionally
+        # and crashed on the missing file.
+        if self._counter % self._record_every != 0:
+            return
+
         midi_events = self._midi_module.get_all_midi_messages()
 
         # Exit if there are no MIDI events or if all events are sustain events.
