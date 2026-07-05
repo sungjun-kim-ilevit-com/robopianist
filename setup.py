@@ -40,7 +40,7 @@ core_requirements = [
     "mujoco_utils>=0.0.6",
     "note_seq>=0.0.5",
     "pretty_midi>=0.2.10",
-    "pyaudio>=0.2.12",
+    "pyaudio>=0.2.12; platform_system == 'Darwin'",  # live playback only; headless Linux pods skip it
     "pyfluidsynth>=1.3.2",
     "scikit-learn==1.4.2",
     "termcolor",
